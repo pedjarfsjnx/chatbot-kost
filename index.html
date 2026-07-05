@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuroKost Bot - Chatbot Informasi Kost Surabaya</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Main Style CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="header-logo">
+                <div class="logo-icon"><i class="fa-solid fa-hotel"></i></div>
+                <div class="logo-text">
+                    <h1>Suro<span>Kost</span> Bot</h1>
+                    <p>Pencarian Kost Terbaik di Surabaya (Dekat UNAIR A & B)</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="engine-badge" id="engineBadge">
+                    <i class="fa-solid fa-gears"></i> Local NLP Engine
+                </div>
+                <button class="btn-icon" id="btnSettings" title="Pengaturan API Gemini">
+                    <i class="fa-solid fa-cog"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Panel -->
+        <div class="dashboard-body">
+            <!-- Left Side: Chatbot -->
+            <section class="chat-section">
+                <div class="chat-window">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message bot-message">
+                            <div class="message-avatar">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                <p>Halo! Selamat datang di <strong>SuroKost Bot</strong>. 👋</p>
+                                <p>Saya dapat membantu Anda mencari kost di sekitar Surabaya, terutama yang terdekat dari Kampus A & B Universitas Airlangga (UNAIR).</p>
+                                <p>Silakan tanyakan sesuatu seperti:</p>
+                                <ul>
+                                    <li><em>"Cari kost putri dekat UNAIR B di bawah 1 juta"</em></li>
+                                    <li><em>"Berapa harga Kost Putra Ivandio?"</em></li>
+                                    <li><em>"Jarak Griya Kost Ummi Sri ke UNAIR Kampus A"</em></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="typing-indicator" id="typingIndicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+
+                <!-- Suggestion Chips -->
+                <div class="suggestion-chips-container">
+                    <div class="suggestion-scroll" id="suggestionScroll">
+                        <button class="chip" data-query="Rekomendasi kost dekat UNAIR Kampus A">
+                            <i class="fa-solid fa-graduation-cap"></i> Dekat UNAIR Kampus A
+                        </button>
+                        <button class="chip" data-query="Cari kost putri AC dan WiFi">
+                            <i class="fa-solid fa-person-dress"></i> Putri + AC + WiFi
+                        </button>
+                        <button class="chip" data-query="Kost putra di bawah 1 juta">
+                            <i class="fa-solid fa-person"></i> Putra < Rp1 Juta
+                        </button>
+                        <button class="chip" data-query="Tunjukkan kost campur terdekat">
+                            <i class="fa-solid fa-people-arrows"></i> Kost Campur
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Chat Input -->
+                <div class="chat-input-container">
+                    <input type="text" id="chatInput" placeholder="Tanyakan seputar kost, harga, fasilitas, atau jarak..." autocomplete="off">
+                    <button class="btn-send" id="btnSend" title="Kirim Pesan">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Side: Interactive Maps & Details Explorer -->
+            <section class="explorer-section">
+                <!-- Tab Headers -->
+                <div class="explorer-tabs">
+                    <button class="tab-btn active" data-tab="mapTab">
+                        <i class="fa-solid fa-map-location-dot"></i> Peta Interaktif
+                    </button>
+                    <button class="tab-btn" data-tab="listTab">
+                        <i class="fa-solid fa-list-ul"></i> Daftar Kost (<span id="kostCount">0</span>)
+                    </button>
+                </div>
+
+                <!-- Tab Contents -->
+                <div class="explorer-content">
+                    <!-- Tab 1: Map View -->
+                    <div class="tab-pane active" id="mapTab">
+                        <div id="map"></div>
+                        <div class="map-legend">
+                            <div class="legend-item"><span class="marker-legend campus-legend"></span> Kampus</div>
+                            <div class="legend-item"><span class="marker-legend kost-p-legend"></span> Kost Putri</div>
+                            <div class="legend-item"><span class="marker-legend kost-l-legend"></span> Kost Putra</div>
+                            <div class="legend-item"><span class="marker-legend kost-c-legend"></span> Kost Campur</div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Explorer / List View -->
+                    <div class="tab-pane" id="listTab">
+                        <div class="filters-container">
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label for="filterType">Tipe Kost</label>
+                                    <select id="filterType">
+                                        <option value="all">Semua Tipe</option>
+                                        <option value="Putra">Putra (L)</option>
+                                        <option value="Putri">Putri (P)</option>
+                                        <option value="Campur">Campur (C)</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label for="filterCampus">Jarak Terdekat ke</label>
+                                    <select id="filterCampus">
+                                        <option value="none">-- Pilih Kampus --</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="filter-row">
+                                <div class="filter-group price-filter">
+                                    <label>Harga Maksimal: <span id="priceVal">Rp2.500.000</span></label>
+                                    <input type="range" id="filterPrice" min="300000" max="3000000" step="50000" value="2500000">
+                                </div>
+                                <div class="filter-group">
+                                    <label for="filterSort">Urutkan</label>
+                                    <select id="filterSort">
+                                        <option value="default">Default</option>
+                                        <option value="priceAsc">Harga Termurah</option>
+                                        <option value="priceDesc">Harga Termahal</option>
+                                        <option value="distanceAsc" disabled>Jarak Terdekat</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Facilities Multi-select -->
+                            <div class="filter-facilities">
+                                <label>Fasilitas Utama:</label>
+                                <div class="facilities-grid">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" class="facility-checkbox" value="AC">
+                                        <span class="checkmark"></span> AC
+                                    </label>
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" class="facility-checkbox" value="WiFi">
+                                        <span class="checkmark"></span> WiFi
+                                    </label>
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" class="facility-checkbox" value="K. Mandi Dalam">
+                                        <span class="checkmark"></span> KM Dalam
+                                    </label>
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" class="facility-checkbox" value="Kasur">
+                                        <span class="checkmark"></span> Kasur
+                                    </label>
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" class="facility-checkbox" value="Meja">
+                                        <span class="checkmark"></span> Meja
+                                    </label>
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" class="facility-checkbox" value="Lemari">
+                                        <span class="checkmark"></span> Lemari
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kost Cards Grid -->
+                        <div class="kost-grid" id="kostGrid">
+                            <!-- Cards will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- API Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-key"></i> Pengaturan Gemini API</h2>
+                <button class="close-btn" id="btnCloseSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Secara default, chatbot menggunakan <strong>Local NLP Engine</strong> (tanpa kunci API). Anda dapat memasukkan kunci API Gemini untuk beralih ke <strong>AI Agent</strong> yang cerdas dan mampu bernalar layaknya asisten sesungguhnya.</p>
+                <div class="form-group">
+                    <label for="apiKeyInput">Gemini API Key</label>
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
+                    </div>
+                    <small>Kunci API disimpan secara lokal di browser Anda dan langsung dikirim ke Google API.</small>
+                </div>
+                <div class="form-group">
+                    <label for="modelSelect">Pilih Model</label>
+                    <select id="modelSelect">
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (Direkomendasikan - Cepat)</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro (Sangat Pintar)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnDisableGemini">Gunakan Local Engine</button>
+                <button class="btn btn-primary" id="btnSaveSettings">Simpan & Aktifkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet Map JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- PapaParse CSV Parser -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Main Script JS -->
+    <script src="app.js"></script>
+</body>
+</html>
