@@ -1006,6 +1006,10 @@ body {
     transition: var(--transition);
 }
 
+#apiKeyInput {
+    -webkit-text-security: disc;
+}
+
 .input-with-icon input:focus {
     border-color: var(--accent);
 }

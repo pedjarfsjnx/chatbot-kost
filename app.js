@@ -744,53 +744,58 @@ function processLocalQuery(query) {
         }
     });
 
-    // Extract specific kost name (Fuzzy matching)
+    // Extract specific kost name (Signature Keywords Matching)
     let foundKost = null;
     let maxMatchScore = 0;
     
-    // Clean query from command keywords to isolate potential kost names
-    const cleanQ = q.replace(/(berapa|harga|biaya|jarak|seberapa|jauh|ke|dari|alamat|fasilitas|nomor|wa|kontak|tipe|kost|kos|putra|putri|campur|\?)/g, '').trim();
+    // Stopwords to exclude when extracting unique signatures from kost titles
+    const stopWords = new Set([
+        'kost', 'kos', 'griya', 'putra', 'putri', 'campur', 'surabaya', 'executive', 
+        'eksekutif', 'muslim', 'dan', 'di', 'pusat', 'kota', 'untuk', 'harian', 
+        'bulanan', 'room', 'house', 'residence', 'home', 'living', 'stay', 'the', 
+        'a', 'b', 'c', 'grosir', 'gang', 'gg', 'no', 'nomor', 'jalan', 'jl'
+    ]);
     
-    if (cleanQ.length >= 3) {
-        kostsData.forEach(k => {
-            const titleClean = k.title.toLowerCase();
-            
-            // Substring check
-            if (titleClean.includes(cleanQ) || cleanQ.includes(titleClean)) {
-                const score = cleanQ.length / titleClean.length + 10;
-                if (score > maxMatchScore) {
-                    maxMatchScore = score;
-                    foundKost = k;
-                }
-            } else {
-                // Token-based similarity
-                const qTokens = cleanQ.split(/\s+/).filter(t => t.length > 2);
-                const titleTokens = titleClean.split(/[\s\-\,\|]+/).filter(t => t.length > 2);
-                
-                let matchCount = 0;
-                qTokens.forEach(qt => {
-                    if (titleTokens.some(tt => tt.includes(qt) || qt.includes(tt))) {
-                        matchCount++;
-                    }
-                });
-                
-                if (matchCount > 0) {
-                    const score = matchCount / qTokens.length;
-                    if (score > maxMatchScore) {
-                        maxMatchScore = score;
-                        foundKost = k;
-                    }
-                }
+    kostsData.forEach(k => {
+        const titleClean = k.title.toLowerCase();
+        
+        // Split title into tokens and remove stopwords to find the "signature" of the kost
+        const titleTokens = titleClean.split(/[\s\-\,\|]+/).filter(t => t.length > 2 && !stopWords.has(t));
+        
+        if (titleTokens.length === 0) return;
+        
+        // Count how many signature tokens of this kost are present in the user query
+        let matchCount = 0;
+        titleTokens.forEach(token => {
+            if (q.includes(token)) {
+                matchCount++;
             }
         });
         
-        // Prevent weak matches
-        if (maxMatchScore < 0.4) {
-            foundKost = null;
+        if (matchCount > 0) {
+            // Score is the percentage of signature tokens matched
+            const score = matchCount / titleTokens.length;
+            
+            // We favor matches that have a higher absolute number of matched tokens to break ties
+            const finalScore = score + (matchCount * 0.1);
+            
+            if (finalScore > maxMatchScore) {
+                maxMatchScore = finalScore;
+                foundKost = k;
+            }
         }
-    }
+    });
     
-    // As a backup, do a direct substring match of title in query
+    // Backup 1: if the query directly includes the whole title or a substantial part of it
+    kostsData.forEach(k => {
+        const titleClean = k.title.toLowerCase();
+        if (q.includes(titleClean) && titleClean.length > 5) {
+            foundKost = k;
+            maxMatchScore = 20; // Absolute highest priority
+        }
+    });
+
+    // Backup 2: check if stripped words have direct substring match
     if (!foundKost) {
         kostsData.forEach(k => {
             const titleClean = k.title.toLowerCase();
