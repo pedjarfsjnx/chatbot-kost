@@ -661,9 +661,9 @@ function processLocalQuery(query) {
     };
 
     // Extract gender type
-    if (q.includes('putri') || q.includes('cewek') || q.includes('perempuan') || q.includes('wanita')) {
+    if (q.includes('putri') || q.includes('cewek') || q.includes('cewe') || q.includes('perempuan') || q.includes('wanita') || q.includes('putry')) {
         entities.genderType = 'Putri';
-    } else if (q.includes('putra') || q.includes('cowok') || q.includes('laki-laki') || q.includes('pria') || q.includes('laki')) {
+    } else if (q.includes('putra') || q.includes('cowok') || q.includes('cowo') || q.includes('laki-laki') || q.includes('pria') || q.includes('laki')) {
         entities.genderType = 'Putra';
     } else if (q.includes('campur') || q.includes('pasutri')) {
         entities.genderType = 'Campur';
@@ -864,6 +864,12 @@ function processLocalQuery(query) {
     }
     if (metaDetails.length > 0) metaText += ` | ${metaDetails.join(', ')}`;
 
+    // Check for conflicting gender input on specific kost queries
+    let warningPrefix = '';
+    if (foundKost && entities.genderType && foundKost.label !== entities.genderType) {
+        warningPrefix = `⚠️ **Catatan:** Anda mencari kost tipe **${entities.genderType}**, tetapi **${foundKost.title}** adalah tipe **${foundKost.label}**.\n\n`;
+    }
+
     switch (intent) {
         case 'tanya_detail':
             responseText = formatKostDetailResponse(foundKost);
@@ -943,6 +949,10 @@ function processLocalQuery(query) {
         default:
             responseText = `MAAF\nSaya tidak memahami pertanyaan Anda. Coba tanyakan kriteria kost seperti: "Rekomendasi kost dekat UNAIR Kampus B dengan AC" atau "Berapa jarak Kost Mawar ke Kampus A?"`;
             break;
+    }
+
+    if (warningPrefix) {
+        responseText = warningPrefix + responseText;
     }
 
     return { text: responseText, meta: metaText };
