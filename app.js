@@ -799,7 +799,7 @@ function processLocalQuery(query) {
     if (!foundKost) {
         kostsData.forEach(k => {
             const titleClean = k.title.toLowerCase();
-            const words = titleClean.replace(/(griya|kost|kos|eksekutif|executive|putra|putri|muslim)/g, '').trim();
+            const words = titleClean.replace(/\b(griya|kost|kos|eksekutif|executive|putra|putri|muslim)\b/g, '').trim();
             if (words.length > 3 && q.includes(words)) {
                 foundKost = k;
             }
