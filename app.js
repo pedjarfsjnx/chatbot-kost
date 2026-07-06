@@ -753,7 +753,10 @@ function processLocalQuery(query) {
         'kost', 'kos', 'griya', 'putra', 'putri', 'campur', 'surabaya', 'executive', 
         'eksekutif', 'muslim', 'dan', 'di', 'pusat', 'kota', 'untuk', 'harian', 
         'bulanan', 'room', 'house', 'residence', 'home', 'living', 'stay', 'the', 
-        'a', 'b', 'c', 'grosir', 'gang', 'gg', 'no', 'nomor', 'jalan', 'jl'
+        'a', 'b', 'c', 'grosir', 'gang', 'gg', 'no', 'nomor', 'jalan', 'jl',
+        'dekat', 'sekitar', 'samping', 'depan', 'belakang', 'seberang', 'unair', 
+        'its', 'unesa', 'upn', 'pens', 'petra', 'untag', 'narotama', 'ciputra', 
+        'unitomo', 'kampus'
     ]);
     
     kostsData.forEach(k => {
