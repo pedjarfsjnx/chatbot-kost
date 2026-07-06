@@ -237,10 +237,12 @@ function renderMapMarkers() {
     
     // Custom color icons for marker types
     const campusIcon = L.divIcon({
-        className: 'custom-div-icon',
-        html: `<div style="background-color: var(--accent-blue); width: 14px; height: 14px; border: 2.5px solid #fff; border-radius: 50%; box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);"></div>`,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7]
+        className: 'custom-campus-icon',
+        html: `<div style="background-color: var(--accent-blue); color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);">
+            <i class="fa-solid fa-school" style="font-size: 12px;"></i>
+        </div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
     });
 
     // Render campuses
@@ -455,11 +457,40 @@ function focusOnKost(kost) {
     }, 1600);
 }
 
-function drawPathLine(p1, p2) {
+async function drawPathLine(p1, p2) {
     if (activePolyline) {
         map.removeLayer(activePolyline);
+        activePolyline = null;
     }
     
+    // Fetch road route from OSRM API (foot profile for walking routes)
+    // p1 = [lat, lng], p2 = [lat, lng]. OSRM accepts: Lng,Lat;Lng,Lat
+    const url = `https://router.project-osrm.org/route/v1/foot/${p1[1]},${p1[0]};${p2[1]},${p2[0]}?overview=full&geometries=geojson`;
+    
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.code === 'Ok' && data.routes && data.routes[0]) {
+            const geom = data.routes[0].geometry;
+            activePolyline = L.geoJSON(geom, {
+                style: {
+                    color: 'var(--accent-blue)',
+                    weight: 4,
+                    opacity: 0.85,
+                    dashArray: '5, 5'
+                }
+            }).addTo(map);
+        } else {
+            drawStraightFallback(p1, p2);
+        }
+    } catch (error) {
+        console.error("OSRM Foot routing API failed, drawing straight fallback:", error);
+        drawStraightFallback(p1, p2);
+    }
+}
+
+function drawStraightFallback(p1, p2) {
     activePolyline = L.polyline([p1, p2], {
         color: 'var(--accent-blue)',
         weight: 3,
