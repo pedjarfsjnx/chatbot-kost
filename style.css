@@ -745,6 +745,7 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    height: 320px;
     transition: var(--transition);
     cursor: pointer;
 }
