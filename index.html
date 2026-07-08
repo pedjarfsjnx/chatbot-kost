@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            alert("JS Error: " + message + "\nSource: " + source + "\nLine: " + lineno);
+            return false;
+        };
+    </script>
     <title>SuroKost Bot - Chatbot Informasi Kost Surabaya</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,7 +19,10 @@
     <!-- Leaflet Map CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <!-- Main Style CSS -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/chat.css">
+    <link rel="stylesheet" href="css/explorer.css">
 </head>
 <body>
     <div class="app-container">
@@ -233,6 +242,9 @@
     <!-- PapaParse CSV Parser -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <!-- Main Script JS -->
-    <script src="app.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/nlp.js"></script>
+    <script src="js/ui.js"></script>
 </body>
 </html>
